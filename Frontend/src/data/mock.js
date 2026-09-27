@@ -11,17 +11,17 @@ export const kpisDashboard = [
 export const insights = [
   {
     tipo: 'oportunidade',
-    texto: '42% dos clientes nível A não possuem serviço de Backup.',
+    descricao: '42% dos clientes nível A não possuem serviço de Backup.',
     tag: 'Oportunidade Cross-sell'
   },
   {
     tipo: 'risco',
-    texto: 'Queda de 15% na renovação de contratos de Link Dedicado no segmento de Varejo.',
+    descricao: 'Queda de 15% na renovação de contratos de Link Dedicado no segmento de Varejo.',
     tag: 'Risco de Churn'
   },
   {
     tipo: 'performance',
-    texto: 'Consultor Carlos Silva atingiu 120% da meta trimestral em serviços Cloud.',
+    descricao: 'Consultor Carlos Silva atingiu 120% da meta trimestral em serviços Cloud.',
     tag: 'Performance Alta'
   }
 ]
@@ -45,10 +45,10 @@ export const clientesPorSegmento = [
 ]
 
 export const consultores = [
-  { nome: 'Carlos Silva', clientesAtivos: 142, ticketMedio: 4250, status: 'acima' },
-  { nome: 'Ana Paula', clientesAtivos: 118, ticketMedio: 3890, status: 'na-meta' },
-  { nome: 'Roberto Oliveira', clientesAtivos: 95, ticketMedio: 5100, status: 'acima' },
-  { nome: 'Mariana Costa', clientesAtivos: 64, ticketMedio: 2900, status: 'atencao' }
+  { nome: 'Carlos Silva', clientesAtivos: 142, ticketMedio: 4250, situacaoMeta: 'acima' },
+  { nome: 'Ana Paula', clientesAtivos: 118, ticketMedio: 3890, situacaoMeta: 'na-meta' },
+  { nome: 'Roberto Oliveira', clientesAtivos: 95, ticketMedio: 5100, situacaoMeta: 'acima' },
+  { nome: 'Mariana Costa', clientesAtivos: 64, ticketMedio: 2900, situacaoMeta: 'atencao' }
 ]
 
 export const topServicos = [
@@ -87,7 +87,7 @@ export const clientes = empresas.map((nome, indice) => {
   const faturamento = 18000 + ((indice * 37_919) % 220_000)
 
   return {
-    id: indice + 1,
+    idCliente: indice + 1,
     nome,
     segmento: segmentos[segmentoPorEmpresa[indice]],
     nivel: nivelPorFaturamento(faturamento),

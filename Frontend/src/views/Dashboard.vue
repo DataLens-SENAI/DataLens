@@ -58,7 +58,7 @@
         >
           <component :is="estiloInsight[insight.tipo].icone" :class="['w-5 h-5 shrink-0 mt-0.5', estiloInsight[insight.tipo].corIcone]" />
           <div class="flex flex-col items-start gap-3">
-            <p class="text-sm font-semibold text-slate-800">{{ insight.texto }}</p>
+            <p class="text-sm font-semibold text-slate-800">{{ insight.descricao }}</p>
             <span :class="['text-xs font-medium px-2 py-1 rounded', estiloInsight[insight.tipo].tag]">{{ insight.tag }}</span>
           </div>
         </article>
@@ -133,9 +133,9 @@
                 <td class="px-6 py-4">{{ consultor.clientesAtivos }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ formatarMoeda(consultor.ticketMedio) }}</td>
                 <td class="px-6 py-4 text-right">
-                  <span :class="['inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap', statusConsultor[consultor.status].classe]">
-                    <component :is="statusConsultor[consultor.status].icone" v-if="statusConsultor[consultor.status].icone" class="w-3 h-3" />
-                    {{ statusConsultor[consultor.status].texto }}
+                  <span :class="['inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap', statusConsultor[consultor.situacaoMeta].classe]">
+                    <component :is="statusConsultor[consultor.situacaoMeta].icone" v-if="statusConsultor[consultor.situacaoMeta].icone" class="w-3 h-3" />
+                    {{ statusConsultor[consultor.situacaoMeta].texto }}
                   </span>
                 </td>
               </tr>
@@ -211,7 +211,7 @@ function exportar() {
     Consultor: consultor.nome,
     'Clientes Ativos': consultor.clientesAtivos,
     'Ticket Médio': consultor.ticketMedio,
-    Status: statusConsultor[consultor.status].texto
+    Status: statusConsultor[consultor.situacaoMeta].texto
   })))
 }
 </script>
