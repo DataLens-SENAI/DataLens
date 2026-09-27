@@ -24,15 +24,19 @@ public class Insight {
 	@Column(length = 1000)
 	private String descricao;
 
+	// rótulo exibido no card do dashboard (ex: "Risco de Churn")
+	private String tag;
+
 	private Double valor;
 
 	private LocalDateTime dataGeracao;
 
-	@ManyToOne(optional = false)
+	// cliente e contrato são opcionais: há insights da carteira toda (ex: "42% dos clientes nível A...")
+	@ManyToOne
 	@JoinColumn(name = "id_cliente")
 	private Cliente cliente;
 
-	@ManyToOne(optional = false)
+	@ManyToOne
 	@JoinColumn(name = "id_contrato")
 	private Contrato contrato;
 
@@ -60,6 +64,14 @@ public class Insight {
 
 	public void setDescricao(String descricao) {
 		this.descricao = descricao;
+	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 	public Double getValor() {
