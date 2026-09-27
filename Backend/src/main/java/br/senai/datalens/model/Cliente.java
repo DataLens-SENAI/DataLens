@@ -13,9 +13,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 @Entity
 public class Cliente {
+
+	private static final BigDecimal FATURAMENTO_NIVEL_A = new BigDecimal("150000");
+	private static final BigDecimal FATURAMENTO_NIVEL_B = new BigDecimal("70000");
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +31,7 @@ public class Cliente {
 
 	private String segmento;
 
+	// calculado a partir do faturamento, ver classificar()
 	@Column(length = 1)
 	private Character nivel;
 
@@ -45,6 +51,27 @@ public class Cliente {
 	// origina: 1 cliente -> 0..* insights
 	@OneToMany(mappedBy = "cliente")
 	private List<Insight> insights = new ArrayList<>();
+
+	// nível definido pelo faturamento anual (A >= 150 mil, B >= 70 mil, C abaixo)
+	@PrePersist
+	@PreUpdate
+	void classificar() {
+		nivel = faturamento == null ? null
+				: faturamento.compareTo(FATURAMENTO_NIVEL_A) >= 0 ? 'A'
+				: faturamento.compareTo(FATURAMENTO_NIVEL_B) >= 0 ? 'B'
+				: 'C';
+	}
+
+	// "risco" | "oportunidade" | "ativo": risco tem prioridade sobre oportunidade
+	public String status() {
+		if (temInsight("risco")) return "risco";
+		if (temInsight("oportunidade")) return "oportunidade";
+		return "ativo";
+	}
+
+	private boolean temInsight(String tipo) {
+		return insights.stream().anyMatch(insight -> tipo.equalsIgnoreCase(insight.getTipo()));
+	}
 
 	public List<Contrato> getContratos() {
 		return contratos;
@@ -76,10 +103,6 @@ public class Cliente {
 
 	public Character getNivel() {
 		return nivel;
-	}
-
-	public void setNivel(Character nivel) {
-		this.nivel = nivel;
 	}
 
 	public BigDecimal getFaturamento() {
