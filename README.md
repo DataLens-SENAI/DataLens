@@ -34,6 +34,8 @@ Este repositório contém o front-end da aplicação, construído com dados simu
 Pré-requisitos: [Node.js](https://nodejs.org/) `^22.18.0` ou `>=24.12.0`.
 
 ```sh
+cd Frontend
+
 # Instalar as dependências
 npm install
 
@@ -50,16 +52,19 @@ npm run preview
 ## Estrutura do projeto
 
 ```
-src/
-├── assets/          # Estilos globais, logos e imagens
-├── components/       # Componentes reutilizáveis (Header, Sidebar, Topbar, Footer, cards)
-│   └── charts/        # Wrappers de gráficos (Chart.js) — Donut, Bar, Area
-├── data/             # Dados simulados (mock) usados enquanto não há API
-├── layouts/          # Layouts de página (área interna com Sidebar + Topbar)
-├── plugins/          # Configuração de bibliotecas (registro do Chart.js)
-├── router/           # Definição das rotas da aplicação
-├── utils/            # Funções utilitárias (formatação, exportação CSV)
-└── views/            # Telas da aplicação
+Backend/             # API em Java (a implementar)
+Data/                # Datasets e arquivos de dados
+Frontend/            # Aplicação Vue + Vite
+└── src/
+    ├── assets/          # Estilos globais, logos e imagens
+    ├── components/       # Componentes reutilizáveis (Header, Sidebar, Topbar, Footer, cards)
+    │   └── charts/        # Wrappers de gráficos (Chart.js) — Donut, Bar, Area
+    ├── data/             # Dados simulados (mock) usados enquanto não há API
+    ├── layouts/          # Layouts de página (área interna com Sidebar + Topbar)
+    ├── plugins/          # Configuração de bibliotecas (registro do Chart.js)
+    ├── router/           # Definição das rotas da aplicação
+    ├── utils/            # Funções utilitárias (formatação, exportação CSV)
+    └── views/            # Telas da aplicação
 ```
 
 ## Telas e rotas
