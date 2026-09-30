@@ -103,7 +103,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="cliente in clientesPagina" :key="cliente.id" class="hover:bg-slate-50">
+            <tr v-for="cliente in clientesPagina" :key="cliente.idCliente" class="hover:bg-slate-50">
               <td class="px-6 py-4 font-medium whitespace-nowrap">{{ cliente.nome }}</td>
               <td class="px-6 py-4">{{ cliente.segmento }}</td>
               <td class="px-6 py-4">
@@ -124,7 +124,7 @@
 
       <!-- Cards -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 p-4 md:p-6">
-        <article v-for="cliente in clientesPagina" :key="cliente.id" class="rounded-lg border border-slate-200 p-4 flex flex-col gap-3">
+        <article v-for="cliente in clientesPagina" :key="cliente.idCliente" class="rounded-lg border border-slate-200 p-4 flex flex-col gap-3">
           <div class="flex items-start justify-between gap-2">
             <p class="font-semibold">{{ cliente.nome }}</p>
             <span :class="['text-xs font-semibold px-2 py-0.5 rounded', classeNivel[cliente.nivel]]">{{ cliente.nivel }}</span>
