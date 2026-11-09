@@ -49,11 +49,36 @@ npm run build
 npm run preview
 ```
 
+### Backend e processamento
+
+Pré-requisitos: Java 21, Python 3.12+ e Docker.
+
+```sh
+# 1. Configuração (preencha DB_PASSWORD e JWT_SEGREDO)
+cd Backend
+cp .env.example .env
+
+# 2a. Tudo em containers (banco + Python + API)
+docker compose up -d --build
+
+# 2b. Ou só o banco em container e o resto local
+docker compose up -d postgres
+cd ../Processamento && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app --port 8000          # serviço Python
+cd ../Backend && set -a && . ./.env && set +a && ./mvnw spring-boot:run   # API na porta 8080
+```
+
+Com o front em `npm run dev`, as chamadas a `/api` vão para a API (proxy do Vite).
+Login de teste (consultores fictícios): `ana.souza@exemplo.com` / `datalens123`.
+
+Testes: `./mvnw test` (Backend) e `.venv/bin/pytest` (Processamento).
+
 ## Estrutura do projeto
 
 ```
-Backend/             # API em Java (a implementar)
-Data/                # Datasets e arquivos de dados
+Backend/             # API em Java (Spring Boot): login, upload, dashboard e listagens
+Processamento/       # Serviço Python (FastAPI + pandas): lê, valida e padroniza as planilhas
+Data/                # Planilha fictícia de exemplo (planilha_exemplo.xlsx)
 Frontend/            # Aplicação Vue + Vite
 └── src/
     ├── assets/          # Estilos globais, logos e imagens
