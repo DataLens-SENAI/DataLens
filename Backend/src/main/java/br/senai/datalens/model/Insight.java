@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Análise gerada a partir dos dados (oportunidade, risco, performance)
 @Entity
 @Table(name = "insights")
 public class Insight {
@@ -48,6 +49,7 @@ public class Insight {
 		dataGeracao = LocalDateTime.now();
 	}
 
+	// getters e setters
 	public Integer getIdInsight() {
 		return idInsight;
 	}

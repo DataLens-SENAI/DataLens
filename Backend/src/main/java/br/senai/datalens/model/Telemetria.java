@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Registro de cada upload de planilha, para auditoria
 @Entity
 @Table(name = "telemetrias")
 public class Telemetria {
@@ -39,6 +40,7 @@ public class Telemetria {
 		dataUpload = LocalDateTime.now();
 	}
 
+	// getters e setters
 	public Integer getIdTelemetria() {
 		return idTelemetria;
 	}

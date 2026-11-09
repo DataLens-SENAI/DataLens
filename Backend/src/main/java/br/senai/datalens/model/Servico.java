@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+// Produto que a empresa oferece e que pode ser contratado
 @Entity
 @Table(name = "servicos")
 public class Servico {
@@ -30,10 +31,12 @@ public class Servico {
 	private List<Contrato> contratos = new ArrayList<>();
 
 	// ponytail: carrega todos os contratos; troque por ContratoRepository.countByServico se ficar lento
+	// quantas vezes o serviço foi contratado
 	public int totalContratacoes() {
 		return contratos.size();
 	}
 
+	// getters e setters
 	public List<Contrato> getContratos() {
 		return contratos;
 	}

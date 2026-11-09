@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+// Contratação de um serviço por um cliente
 @Entity
 @Table(name = "contratos")
 public class Contrato {
@@ -47,6 +48,7 @@ public class Contrato {
 	@OneToMany(mappedBy = "contrato")
 	private List<Insight> insights = new ArrayList<>();
 
+	// ativo = status ATIVO e hoje dentro do período do contrato
 	public boolean estaAtivo() {
 		LocalDate hoje = LocalDate.now();
 		return "ATIVO".equalsIgnoreCase(status)
@@ -54,6 +56,7 @@ public class Contrato {
 				&& (dataFim == null || !hoje.isAfter(dataFim));
 	}
 
+	// getters e setters
 	public List<Insight> getInsights() {
 		return insights;
 	}

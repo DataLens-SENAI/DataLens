@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+// Usuário do sistema: faz login, atende clientes e envia planilhas
 @Entity
 @Table(name = "consultores")
 public class Consultor {
@@ -49,20 +50,24 @@ public class Consultor {
 	@OneToMany(mappedBy = "consultor")
 	private List<Telemetria> telemetrias = new ArrayList<>();
 
+	// confere a senha digitada com o hash salvo
 	public boolean autenticar(String senha) {
 		return senha != null && ENCODER.matches(senha, senhaHash);
 	}
 
+	// guarda só o hash BCrypt, nunca a senha em texto
 	public void setSenha(String senha) {
 		this.senhaHash = ENCODER.encode(senha);
 	}
 
+	// quantos clientes da carteira têm ao menos um contrato ativo
 	public long clientesAtivos() {
 		return carteira.stream()
 				.filter(cliente -> cliente.getContratos().stream().anyMatch(Contrato::estaAtivo))
 				.count();
 	}
 
+	// valor médio dos contratos ativos da carteira
 	public BigDecimal ticketMedio() {
 		List<BigDecimal> valores = valoresAtivos();
 		if (valores.isEmpty()) return BigDecimal.ZERO;
@@ -80,6 +85,7 @@ public class Consultor {
 	}
 
 	// ponytail: percorre a carteira em memória; troque por consulta agregada no repository se ficar lento
+	// valores de todos os contratos ativos da carteira
 	private List<BigDecimal> valoresAtivos() {
 		return carteira.stream()
 				.flatMap(cliente -> cliente.getContratos().stream())
@@ -89,10 +95,12 @@ public class Consultor {
 				.toList();
 	}
 
+	// soma uma lista de valores
 	private static BigDecimal soma(List<BigDecimal> valores) {
 		return valores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
+	// getters e setters
 	public List<Cliente> getCarteira() {
 		return carteira;
 	}
