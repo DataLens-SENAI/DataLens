@@ -1,6 +1,7 @@
 package br.senai.datalens.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -44,6 +45,23 @@ class RegrasModelTest {
 		assertEquals("atencao", consultor.situacaoMeta());
 	}
 
+	// sem meta ou sem valor de contrato não há como avaliar: não inventa zero nem situação
+	@Test
+	void semDadosNaoInventaIndicador() {
+		Consultor consultor = new Consultor();
+		Cliente cliente = new Cliente();
+		consultor.getCarteira().add(cliente);
+		cliente.getContratos().add(contrato(null, "ATIVO"));
+		consultor.setMeta(new BigDecimal("1000"));
+
+		assertNull(consultor.ticketMedio());
+		assertEquals("sem-dados", consultor.situacaoMeta());
+
+		consultor.setMeta(null);
+		cliente.getContratos().add(contrato("500", "ATIVO"));
+		assertEquals("sem-dados", consultor.situacaoMeta());
+	}
+
 	// cria um insight só com o tipo
 	private static Insight insight(String tipo) {
 		Insight insight = new Insight();
@@ -55,7 +73,7 @@ class RegrasModelTest {
 	private static Contrato contrato(String valor, String status) {
 		Contrato contrato = new Contrato();
 		contrato.setDataInicio(LocalDate.now().minusDays(1));
-		contrato.setValor(new BigDecimal(valor));
+		contrato.setValor(valor == null ? null : new BigDecimal(valor));
 		contrato.setStatus(status);
 		return contrato;
 	}

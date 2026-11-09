@@ -67,18 +67,19 @@ public class Consultor {
 				.count();
 	}
 
-	// valor médio dos contratos ativos da carteira
+	// valor médio dos contratos ativos da carteira; null = nenhum contrato com valor (não inventa zero)
 	public BigDecimal ticketMedio() {
 		List<BigDecimal> valores = valoresAtivos();
-		if (valores.isEmpty()) return BigDecimal.ZERO;
+		if (valores.isEmpty()) return null;
 		return soma(valores).divide(BigDecimal.valueOf(valores.size()), 2, RoundingMode.HALF_UP);
 	}
 
-	// "acima" | "na-meta" | "atencao"
+	// "acima" | "na-meta" | "atencao" | "sem-dados" (sem meta ou sem contratos com valor para comparar)
 	// ponytail: faixas fixas (>= 110% acima, >= 90% na meta); vira configuração se o negócio pedir
 	public String situacaoMeta() {
-		if (meta == null || meta.signum() == 0) return "na-meta";
-		BigDecimal realizado = soma(valoresAtivos());
+		List<BigDecimal> valores = valoresAtivos();
+		if (meta == null || meta.signum() == 0 || valores.isEmpty()) return "sem-dados";
+		BigDecimal realizado = soma(valores);
 		if (realizado.compareTo(meta.multiply(new BigDecimal("1.1"))) >= 0) return "acima";
 		if (realizado.compareTo(meta.multiply(new BigDecimal("0.9"))) >= 0) return "na-meta";
 		return "atencao";
