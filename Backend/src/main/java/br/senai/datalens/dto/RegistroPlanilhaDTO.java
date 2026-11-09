@@ -1,18 +1,17 @@
 package br.senai.datalens.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
-// Uma linha da planilha já validada e padronizada pelo serviço Python.
-// PROVISÓRIO: campos sujeitos a mudança quando houver a planilha de exemplo (ver AGENTS.md §9).
+// Um cliente da planilha já validado e padronizado pelo serviço Python.
+// consultor = nome ou email do consultor responsável, como veio na planilha.
 public record RegistroPlanilhaDTO(
 		Integer linha,
-		String emailConsultor,
+		String consultor,
+		String codigoCliente,
 		String nomeCliente,
 		String segmento,
 		Character nivel,
 		BigDecimal faturamento,
-		List<String> servicos,
-		LocalDate dataContratacao) {
+		List<ServicoContratadoDTO> servicos) {
 }
