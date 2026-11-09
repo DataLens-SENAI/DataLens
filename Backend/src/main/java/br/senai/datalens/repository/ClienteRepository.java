@@ -1,6 +1,7 @@
 package br.senai.datalens.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +12,17 @@ import br.senai.datalens.model.Cliente;
 // Acesso aos clientes e agregações do dashboard.
 // Em todas as consultas, idConsultor nulo = carteira inteira.
 public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
+
+	// busca o cliente pelo código da planilha (usado na importação)
+	Optional<Cliente> findByCodigoInterno(String codigoInterno);
+
+	// clientes em ordem alfabética (tela de Análises)
+	@Query("""
+			select c from Cliente c
+			where :idConsultor is null or c.consultor.idConsultor = :idConsultor
+			order by c.nome
+			""")
+	List<Cliente> listar(Integer idConsultor);
 
 	// quantidade de clientes por segmento, do maior para o menor
 	@Query("""
