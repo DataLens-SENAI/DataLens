@@ -15,8 +15,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "clientes")
 public class Cliente {
 
 	private static final BigDecimal FATURAMENTO_NIVEL_A = new BigDecimal("150000");
