@@ -17,6 +17,9 @@
       </button>
     </div>
 
+    <!-- Erro ao carregar -->
+    <p v-if="erro" class="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">{{ erro }}</p>
+
     <!-- Resumo do filtro atual -->
     <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <CardIndicador titulo="Clientes" :valor="formatarNumero(clientesFiltrados.length)" :icone="Users" />
@@ -53,7 +56,7 @@
         </select>
         <select v-model="filtros.consultor" :class="classeSelect">
           <option value="">Todos os consultores</option>
-          <option v-for="consultor in consultores" :key="consultor.nome">{{ consultor.nome }}</option>
+          <option v-for="consultor in consultores" :key="consultor.idConsultor">{{ consultor.nome }}</option>
         </select>
         <select v-model="filtros.status" :class="classeSelect">
           <option value="">Todos os status</option>
@@ -163,12 +166,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import {
   Download, Search, Users, DollarSign, Wallet, TriangleAlert, Table, LayoutGrid, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-vue-next'
 import CardIndicador from '../components/CardIndicador.vue'
-import { clientes, consultores, opcoesSegmento } from '../data/mock'
+import { requisitar } from '../services/api'
 import { formatarMoeda, formatarNumero } from '../utils/formatar'
 import { exportarCSV } from '../utils/exportarCSV'
 
@@ -204,6 +207,24 @@ const modos = [
   { valor: 'cards', texto: 'Cards', icone: LayoutGrid }
 ]
 
+const clientes = ref([]) // GET /clientes
+const consultores = ref([]) // GET /consultores (opções do filtro)
+const erro = ref('')
+
+// Segmentos presentes na carteira, em ordem alfabética (opções do filtro)
+const opcoesSegmento = computed(() =>
+  [...new Set(clientes.value.map((cliente) => cliente.segmento))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+)
+
+// Carrega clientes e consultores da API ao abrir a tela
+onMounted(async () => {
+  try {
+    [clientes.value, consultores.value] = await Promise.all([requisitar('/clientes'), requisitar('/consultores')])
+  } catch (falha) {
+    erro.value = falha.message
+  }
+})
+
 const filtrosIniciais = { busca: '', segmento: '', nivel: '', consultor: '', status: '' }
 const filtros = reactive({ ...filtrosIniciais })
 const visualizacao = ref('tabela')
@@ -215,7 +236,7 @@ const temFiltro = computed(() => Object.values(filtros).some(Boolean))
 const clientesFiltrados = computed(() => {
   const busca = filtros.busca.toLowerCase()
 
-  const filtrados = clientes.filter((cliente) =>
+  const filtrados = clientes.value.filter((cliente) =>
     (!busca || cliente.nome.toLowerCase().includes(busca)) &&
     (!filtros.segmento || cliente.segmento === filtros.segmento) &&
     (!filtros.nivel || cliente.nivel === filtros.nivel) &&
