@@ -81,26 +81,62 @@
 
           <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
             <div
-              :class="['h-full rounded-full transition-all duration-200', status === 'concluido' ? 'bg-emerald-500' : 'bg-blue-700']"
+              :class="['h-full rounded-full transition-all duration-200', corDaBarra]"
               :style="{ width: `${progresso}%` }"
             ></div>
           </div>
 
           <div class="flex items-center justify-between gap-4 text-sm">
             <p v-if="status === 'enviando'" class="text-slate-600">Enviando arquivo... {{ progresso }}%</p>
-            <p v-else class="flex items-center gap-2 font-medium text-emerald-700">
+            <p v-else-if="status === 'processando'" class="text-slate-600">Validando e padronizando os dados...</p>
+            <p v-else-if="resultado?.status === 'SUCESSO'" class="flex items-center gap-2 font-medium text-emerald-700">
               <CircleCheck class="w-4 h-4" />
-              Upload concluído · Pronto para validação
+              Importação concluída · {{ formatarNumero(resultado.registrosProcessados) }} registros processados
+            </p>
+            <p v-else-if="resultado" class="flex items-center gap-2 font-medium text-rose-700">
+              <CircleAlert class="w-4 h-4" />
+              {{ resultado.problemas.length }} problema(s) encontrado(s). Nada foi gravado: corrija a planilha e envie de novo.
             </p>
 
-            <button
-              v-if="status === 'concluido'"
+            <router-link
+              v-if="resultado?.status === 'SUCESSO'"
+              to="/dashboard"
               class="shrink-0 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 duration-200"
-              @click="etapaAtual = 1"
             >
-              Continuar
+              Ver Dashboard
+            </router-link>
+            <button
+              v-else-if="status === 'concluido'"
+              class="shrink-0 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 duration-200"
+              @click="removerArquivo"
+            >
+              Enviar outro arquivo
             </button>
           </div>
+        </div>
+
+        <!-- Problemas da validação: linha, campo, valor original e sugestão -->
+        <div v-if="resultado?.problemas.length" class="mt-4 overflow-x-auto rounded-lg border border-rose-200">
+          <table class="w-full text-sm">
+            <thead class="bg-rose-50 text-left text-rose-800">
+              <tr>
+                <th class="font-medium px-4 py-2">Linha</th>
+                <th class="font-medium px-4 py-2">Campo</th>
+                <th class="font-medium px-4 py-2">Problema</th>
+                <th class="font-medium px-4 py-2">Valor original</th>
+                <th class="font-medium px-4 py-2">Sugestão</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-rose-100">
+              <tr v-for="(problema, indice) in resultado.problemas" :key="indice">
+                <td class="px-4 py-2">{{ problema.linha ?? 'Arquivo' }}</td>
+                <td class="px-4 py-2">{{ problema.campo }}</td>
+                <td class="px-4 py-2">{{ problema.mensagem }}</td>
+                <td class="px-4 py-2 text-slate-600">{{ problema.valorOriginal ?? '—' }}</td>
+                <td class="px-4 py-2 text-slate-600">{{ problema.valorSugerido ?? '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <p v-if="erro" class="mt-4 flex items-center gap-2 text-sm text-rose-600">
@@ -121,52 +157,80 @@
         <Info class="w-4 h-4 shrink-0" />
         <div>
           <p class="font-semibold text-slate-800">Formatos suportados: .xlsx, .xls, .csv. Tamanho máximo: 50MB.</p>
-          <p class="mt-1">Os dados enviados são processados localmente antes da importação para garantir a integridade e conformidade com as regras de negócio.</p>
+          <p class="mt-1">A planilha é validada e padronizada antes de qualquer gravação. Se houver erros, nada é gravado e você vê a lista do que corrigir.</p>
         </div>
       </div>
     </section>
 
-    <!-- Rascunhos -->
+    <!-- Histórico de importações (telemetria) -->
     <section class="flex flex-col gap-3">
-      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Importações recentes (rascunhos)</h2>
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Importações recentes</h2>
+
+      <p v-if="!historico.length" class="text-sm text-slate-500">Nenhuma importação ainda.</p>
 
       <article
-        v-for="importacao in importacoesRecentes"
-        :key="importacao.arquivo"
+        v-for="importacao in historico"
+        :key="importacao.idTelemetria"
         class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4"
       >
         <span class="w-10 h-10 shrink-0 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
           <Table class="w-5 h-5" />
         </span>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold truncate">{{ importacao.arquivo }}</p>
-          <p class="text-xs text-slate-500">Parado em: {{ importacao.etapa }} · {{ importacao.quando }}</p>
+          <p class="font-semibold truncate">{{ importacao.nomeArquivo }}</p>
+          <p class="text-xs text-slate-500">
+            {{ importacao.consultor }} · {{ formatarDataHora(importacao.dataUpload) }} · {{ importacao.registrosProcessados }} registros
+          </p>
         </div>
-        <button class="text-sm font-semibold text-blue-700 hover:underline">Continuar</button>
+        <span :class="['text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap', importacao.status === 'SUCESSO' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700']">
+          {{ TEXTO_STATUS[importacao.status] ?? importacao.status }}
+        </span>
       </article>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FileText, FileSpreadsheet, Trash2, Check, CircleCheck, CircleAlert, Info, Table } from 'lucide-vue-next'
-import { importacoesRecentes } from '../data/mock'
-import { formatarTamanho } from '../utils/formatar'
+import { enviarArquivo, requisitar } from '../services/api'
+import { formatarNumero, formatarTamanho } from '../utils/formatar'
 
 const EXTENSOES = ['xlsx', 'xls', 'csv']
 const TAMANHO_MAXIMO = 50 * 1024 * 1024
 
+// Texto de cada status de telemetria
+const TEXTO_STATUS = {
+  SUCESSO: 'Concluída',
+  FALHA_VALIDACAO: 'Com erros',
+  FALHA_PROCESSAMENTO: 'Falha no processamento',
+  FALHA_GRAVACAO: 'Falha ao gravar'
+}
+
+// Etapas exibidas; a API faz validação, padronização e importação de uma vez
 const etapas = ['Upload', 'Validação', 'Padronização', 'Revisão', 'Importação']
+const ETAPA_VALIDACAO = 1
 const etapaAtual = ref(0)
 
 const seletor = ref(null)
 const arquivo = ref(null)
 const arrastando = ref(false)
-const status = ref('') // 'enviando' | 'concluido'
+const status = ref('') // 'enviando' | 'processando' | 'concluido'
 const progresso = ref(0)
 const erro = ref('')
-let intervalo = null
+const resultado = ref(null) // resposta de POST /importacoes
+const historico = ref([]) // GET /importacoes
+
+onMounted(carregarHistorico)
+
+// Últimas importações
+async function carregarHistorico() {
+  try {
+    historico.value = await requisitar('/importacoes')
+  } catch (falha) {
+    erro.value = falha.message
+  }
+}
 
 function abrirSeletor() {
   seletor.value.click()
@@ -182,6 +246,7 @@ function soltarArquivo(evento) {
   carregarArquivo(evento.dataTransfer.files[0])
 }
 
+// Confere formato e tamanho antes de enviar (a API confere de novo)
 function carregarArquivo(novoArquivo) {
   if (!novoArquivo) return
   erro.value = ''
@@ -197,31 +262,49 @@ function carregarArquivo(novoArquivo) {
   }
 
   arquivo.value = novoArquivo
-  simularEnvio()
+  enviar()
 }
 
-// Upload simulado: ainda não há API para receber o arquivo
-function simularEnvio() {
-  clearInterval(intervalo)
+// Envia para a API e mostra o resultado: sucesso conclui todas as etapas, erro para na validação
+async function enviar() {
   status.value = 'enviando'
   progresso.value = 0
+  resultado.value = null
+  etapaAtual.value = 0
 
-  intervalo = setInterval(() => {
-    progresso.value = Math.min(progresso.value + 10, 100)
-    if (progresso.value === 100) {
-      clearInterval(intervalo)
-      status.value = 'concluido'
-    }
-  }, 150)
+  try {
+    resultado.value = await enviarArquivo('/importacoes', arquivo.value, (percentual) => {
+      progresso.value = percentual
+      if (percentual === 100) {
+        status.value = 'processando'
+        etapaAtual.value = ETAPA_VALIDACAO
+      }
+    })
+    etapaAtual.value = resultado.value.status === 'SUCESSO' ? etapas.length : ETAPA_VALIDACAO
+  } catch (falha) {
+    erro.value = falha.message
+  }
+  status.value = 'concluido'
+  carregarHistorico()
 }
 
 function removerArquivo() {
-  clearInterval(intervalo)
   arquivo.value = null
   status.value = ''
   progresso.value = 0
   etapaAtual.value = 0
+  resultado.value = null
+  erro.value = ''
 }
 
-onBeforeUnmount(() => clearInterval(intervalo))
+// Barra azul durante o envio, verde no sucesso e vermelha se houver erro
+const corDaBarra = computed(() => {
+  if (status.value !== 'concluido') return 'bg-blue-700'
+  return resultado.value?.status === 'SUCESSO' ? 'bg-emerald-500' : 'bg-rose-500'
+})
+
+// "2026-11-09T01:26:06" -> "09/11/2026 01:26"
+function formatarDataHora(data) {
+  return new Date(data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
 </script>
