@@ -4,26 +4,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace;
 
+import br.senai.datalens.dto.ClienteDTO;
 import br.senai.datalens.dto.ContagemDTO;
 import br.senai.datalens.dto.ContratacoesMesDTO;
+import br.senai.datalens.dto.DashboardDTO;
+import br.senai.datalens.dto.KpisDTO;
 import br.senai.datalens.model.Cliente;
 import br.senai.datalens.model.Consultor;
 import br.senai.datalens.model.Contrato;
+import br.senai.datalens.model.Insight;
 import br.senai.datalens.model.Servico;
+import br.senai.datalens.service.CarteiraService;
+import br.senai.datalens.service.DashboardService;
+import jakarta.persistence.EntityManager;
 
-// Consultas do dashboard com dados fictícios e resultado calculado à mão:
+// Consultas e services do dashboard com dados fictícios e resultado calculado à mão:
 //   Ana:   Indústria/A/200 mil, Indústria/B/100 mil, Comércio/C/30 mil
 //   Bruno: Serviços/A/170 mil
-//   Contratos: jan/2026 x3 (2 da Ana, 1 do Bruno), mar/2026 x1 (Ana)
+//   Contratos de Cloud: jan/2026 x3 (2 da Ana, 1 do Bruno), mar/2026 x1 (Ana)
+//   Contrato de Telefonia IP sem data (Ana) -> fora do gráfico de evolução
+//   Insights: um da carteira toda e um de risco do cliente do Bruno
 @DataJpaTest
+@Import({ DashboardService.class, CarteiraService.class })
 @AutoConfigureTestDatabase(replace = Replace.NONE) // usa o H2 configurado em test/resources (modo PostgreSQL)
 class AgregacoesDashboardTest {
 
@@ -35,15 +47,25 @@ class AgregacoesDashboardTest {
 	private ServicoRepository servicos;
 	@Autowired
 	private ContratoRepository contratos;
+	@Autowired
+	private InsightRepository insights;
+	@Autowired
+	private DashboardService dashboard;
+	@Autowired
+	private CarteiraService carteira;
+	@Autowired
+	private EntityManager banco;
 
 	private Consultor ana;
+	private Consultor bruno;
 
 	// monta a carteira fictícia descrita acima
 	@BeforeEach
 	void popularBanco() {
 		ana = consultor("Ana", "ana@exemplo.com");
-		Consultor bruno = consultor("Bruno", "bruno@exemplo.com");
+		bruno = consultor("Bruno", "bruno@exemplo.com");
 		Servico cloud = servico("Cloud");
+		Servico telefonia = servico("Telefonia IP");
 
 		Cliente metalurgica = cliente(ana, "Indústria", 'A', "200000");
 		Cliente fabrica = cliente(ana, "Indústria", 'B', "100000");
@@ -54,6 +76,14 @@ class AgregacoesDashboardTest {
 		contrato(metalurgica, cloud, LocalDate.of(2026, 1, 20));
 		contrato(fabrica, cloud, LocalDate.of(2026, 3, 5));
 		contrato(consultoria, cloud, LocalDate.of(2026, 1, 15));
+		contrato(metalurgica, telefonia, null);
+
+		insight(null);
+		insight(consultoria);
+
+		// grava e limpa a sessão para as consultas lerem do banco (com os relacionamentos completos)
+		banco.flush();
+		banco.clear();
 	}
 
 	// segmentos: carteira toda e filtrado pela Ana
@@ -94,6 +124,50 @@ class AgregacoesDashboardTest {
 				new ContratacoesMesDTO(2026, 1, 2L), new ContratacoesMesDTO(2026, 3, 1L));
 	}
 
+	// contratos sem data contam no total, mas não no gráfico; serviços mais contratados primeiro
+	@Test
+	void contaContratosEServicos() {
+		assertThat(contratos.contarContratos(null)).isEqualTo(5);
+		assertThat(contratos.contarSemData(null)).isEqualTo(1);
+		assertThat(contratos.contarSemData(bruno.getIdConsultor())).isZero();
+		assertThat(servicos.contarContratosPorServico(null)).containsExactly(
+				new ContagemDTO("Cloud", 4L), new ContagemDTO("Telefonia IP", 1L));
+		assertThat(servicos.contarContratosPorServico(ana.getIdConsultor())).containsExactly(
+				new ContagemDTO("Cloud", 3L), new ContagemDTO("Telefonia IP", 1L));
+	}
+
+	// filtro por consultor mantém os insights da carteira toda e tira os de clientes de outros consultores
+	@Test
+	void filtraInsightsPorConsultor() {
+		assertThat(insights.listar(null)).hasSize(2);
+		assertThat(insights.listar(ana.getIdConsultor())).singleElement()
+				.satisfies(insight -> assertThat(insight.getCliente()).isNull());
+		assertThat(insights.listar(bruno.getIdConsultor())).hasSize(2);
+	}
+
+	// dashboard da Ana: 3 clientes, 1 consultor, média 110 mil, 4 contratos sendo 1 sem data
+	@Test
+	void montaDashboardFiltrado() {
+		DashboardDTO resultado = dashboard.montar(ana.getIdConsultor());
+
+		assertThat(resultado.kpis()).isEqualTo(new KpisDTO(3, 1, 110000.0, 4, 1));
+		assertThat(resultado.insights()).hasSize(1);
+		assertThat(dashboard.montar(null).kpis().totalConsultores()).isEqualTo(2);
+	}
+
+	// listagem da Ana em ordem alfabética, com contagem de serviços; cliente do Bruno fica em risco
+	@Test
+	void listaCarteira() {
+		List<ClienteDTO> daAna = carteira.listarClientes(ana.getIdConsultor());
+
+		assertThat(daAna).extracting(ClienteDTO::nome)
+				.containsExactly("Cliente Comércio C", "Cliente Indústria A", "Cliente Indústria B");
+		assertThat(daAna.get(1).servicos()).isEqualTo(3);
+		assertThat(carteira.listarClientes(bruno.getIdConsultor())).singleElement()
+				.satisfies(cliente -> assertThat(cliente.status()).isEqualTo("risco"));
+		assertThat(carteira.listarConsultores()).hasSize(2);
+	}
+
 	private Consultor consultor(String nome, String email) {
 		Consultor consultor = new Consultor();
 		consultor.setNome(nome);
@@ -124,6 +198,15 @@ class AgregacoesDashboardTest {
 		contrato.setServico(servico);
 		contrato.setDataInicio(inicio);
 		contratos.save(contrato);
+	}
+
+	// insight de risco ligado ao cliente, ou da carteira toda se cliente for nulo
+	private void insight(Cliente cliente) {
+		Insight insight = new Insight();
+		insight.setTipo("risco");
+		insight.setDescricao("insight de teste");
+		insight.setCliente(cliente);
+		insights.save(insight);
 	}
 
 }
