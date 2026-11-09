@@ -24,7 +24,7 @@ public class Contrato {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer idContrato;
 
-	@Column(nullable = false)
+	// null = a planilha não informou a data de contratação
 	private LocalDate dataInicio;
 
 	// null = contrato sem data de término
@@ -48,11 +48,11 @@ public class Contrato {
 	@OneToMany(mappedBy = "contrato")
 	private List<Insight> insights = new ArrayList<>();
 
-	// ativo = status ATIVO e hoje dentro do período do contrato
+	// ativo = status ATIVO e hoje dentro do período do contrato (sem data de início conta como já iniciado)
 	public boolean estaAtivo() {
 		LocalDate hoje = LocalDate.now();
 		return "ATIVO".equalsIgnoreCase(status)
-				&& !hoje.isBefore(dataInicio)
+				&& (dataInicio == null || !hoje.isBefore(dataInicio))
 				&& (dataFim == null || !hoje.isAfter(dataFim));
 	}
 

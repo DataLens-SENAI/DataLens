@@ -24,6 +24,10 @@ public class Cliente {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer idCliente;
 
+	// código do cliente na planilha: identifica o cliente entre uploads
+	@Column(unique = true)
+	private String codigoInterno;
+
 	@Column(nullable = false)
 	private String nome;
 
@@ -72,6 +76,14 @@ public class Cliente {
 
 	public Integer getIdCliente() {
 		return idCliente;
+	}
+
+	public String getCodigoInterno() {
+		return codigoInterno;
+	}
+
+	public void setCodigoInterno(String codigoInterno) {
+		this.codigoInterno = codigoInterno;
 	}
 
 	public String getNome() {
