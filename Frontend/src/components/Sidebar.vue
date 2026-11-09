@@ -41,8 +41,8 @@
     <!-- Usuário -->
     <div class="mx-3 mt-4 border-t border-slate-700/70 px-3 py-5 flex flex-col gap-4">
       <div>
-        <p class="text-sm font-semibold text-white">Usuário DataLens</p>
-        <p class="text-xs text-slate-400">Admin</p>
+        <p class="text-sm font-semibold text-white">{{ sessao?.nome ?? 'Usuário DataLens' }}</p>
+        <p class="text-xs text-slate-400">Consultor</p>
       </div>
 
       <router-link to="/login" class="flex items-center gap-3 text-sm text-slate-400 hover:text-white duration-200">
@@ -58,12 +58,16 @@ import {
   LayoutDashboard, Users, BriefcaseBusiness, Shapes, Layers, ChartColumn,
   Lightbulb, CloudUpload, ListChecks, Settings, LogOut, X
 } from 'lucide-vue-next'
+import { lerSessao } from '../services/api'
 
 defineProps({
   aberta: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['fechar'])
+
+// consultor logado (nome exibido no rodapé do menu)
+const sessao = lerSessao()
 
 const itens = [
   { nome: 'Visão Geral', rota: '/dashboard', icone: LayoutDashboard },

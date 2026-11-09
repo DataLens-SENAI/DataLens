@@ -17,4 +17,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Em desenvolvimento, /api/... vai para a API Java (sem precisar de CORS)
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        rewrite: (caminho) => caminho.replace(/^\/api/, ''),
+      },
+    },
+  },
 })

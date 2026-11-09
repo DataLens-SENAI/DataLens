@@ -73,6 +73,8 @@
             <a href="#" class="text-xs font-semibold text-blue-700 hover:underline">Esqueci minha senha</a>
           </div>
 
+          <p v-if="erroLogin" class="text-sm text-rose-600" role="alert">{{ erroLogin }}</p>
+
           <button
             type="submit"
             :disabled="carregando"
@@ -109,6 +111,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, ChartColumn, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-vue-next'
+import { entrar as autenticar, encerrarSessao } from '../services/api'
 
 const CHAVE_EMAIL = 'datalens:email'
 
@@ -123,6 +126,10 @@ const lembrar = ref(!!email.value)
 const mostrarSenha = ref(false)
 const carregando = ref(false)
 const erros = reactive({ email: '', senha: '' })
+const erroLogin = ref('')
+
+// Abrir a tela de login (inclusive pelo "Logout" do menu) encerra a sessão atual
+encerrarSessao()
 
 function lerEmailSalvo() {
   try {
@@ -145,8 +152,9 @@ function validar() {
   return !erros.email && !erros.senha
 }
 
-// Login simulado: ainda não há API de autenticação
-function entrar() {
+// Envia email e senha para a API; se der certo, vai para o dashboard
+async function entrar() {
+  erroLogin.value = ''
   if (!validar()) return
 
   try {
@@ -157,6 +165,13 @@ function entrar() {
   }
 
   carregando.value = true
-  setTimeout(() => router.push('/dashboard'), 800)
+  try {
+    await autenticar(email.value, senha.value)
+    router.push('/dashboard')
+  } catch (erro) {
+    erroLogin.value = erro.message
+  } finally {
+    carregando.value = false
+  }
 }
 </script>

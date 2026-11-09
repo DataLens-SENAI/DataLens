@@ -30,8 +30,8 @@
         <Settings class="w-5 h-5" />
       </router-link>
 
-      <div class="w-9 h-9 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center" title="Usuário DataLens">
-        UD
+      <div class="w-9 h-9 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center" :title="nome">
+        {{ iniciais(nome) }}
       </div>
     </div>
   </header>
@@ -40,7 +40,12 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { Menu, ChevronRight, Search, Bell, Settings } from 'lucide-vue-next'
+import { lerSessao } from '../services/api'
+import { iniciais } from '../utils/formatar'
 
 const route = useRoute()
 const emit = defineEmits(['abrir-menu'])
+
+// nome do consultor logado (avatar com as iniciais)
+const nome = lerSessao()?.nome ?? 'Usuário DataLens'
 </script>

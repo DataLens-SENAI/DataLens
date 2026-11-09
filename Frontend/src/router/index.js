@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import AppLayout from '../layouts/AppLayout.vue'
+import { lerSessao } from '../services/api'
 
 // Telas da área interna ainda sem protótipo usam o placeholder "Em breve"
 const EmBreve = () => import('../views/EmBreve.vue')
@@ -19,9 +20,10 @@ const routes = [
         component: Login
     },
     {
-        // Área interna: Sidebar + Topbar compartilhadas
+        // Área interna: Sidebar + Topbar compartilhadas; exige login
         path: '/',
         component: AppLayout,
+        meta: { privada: true },
         children: [
             { path: 'dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue'), meta: { titulo: 'Dashboard' } },
             { path: 'clientes', name: 'clientes', component: EmBreve, meta: { titulo: 'Clientes' } },
@@ -47,6 +49,13 @@ const router = createRouter({
     scrollBehavior(to) {
         if (to.hash) return { el: to.hash, behavior: 'smooth' }
         return { top: 0 }
+    }
+})
+
+// Sem sessão, qualquer tela da área interna redireciona para o login
+router.beforeEach((destino) => {
+    if (destino.matched.some((rota) => rota.meta.privada) && !lerSessao()?.token) {
+        return { name: 'login' }
     }
 })
 
