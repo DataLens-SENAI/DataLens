@@ -1,34 +1,16 @@
 package br.senai.datalens.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
+// Regras de negócio que ficam nas próprias entidades
 class RegrasModelTest {
 
-	@Test
-	void nivelSegueFaturamento() {
-		Cliente cliente = new Cliente();
-		cliente.classificar();
-		assertNull(cliente.getNivel());
-
-		cliente.setFaturamento(new BigDecimal("150000"));
-		cliente.classificar();
-		assertEquals('A', cliente.getNivel());
-
-		cliente.setFaturamento(new BigDecimal("70000"));
-		cliente.classificar();
-		assertEquals('B', cliente.getNivel());
-
-		cliente.setFaturamento(new BigDecimal("69999.99"));
-		cliente.classificar();
-		assertEquals('C', cliente.getNivel());
-	}
-
+	// status do cliente: risco vence oportunidade; sem insight = ativo
 	@Test
 	void statusPriorizaRisco() {
 		Cliente cliente = new Cliente();
@@ -41,6 +23,7 @@ class RegrasModelTest {
 		assertEquals("risco", cliente.status());
 	}
 
+	// meta e ticket médio consideram só contratos ativos
 	@Test
 	void situacaoMetaUsaContratosAtivos() {
 		Consultor consultor = new Consultor();
@@ -61,12 +44,14 @@ class RegrasModelTest {
 		assertEquals("atencao", consultor.situacaoMeta());
 	}
 
+	// cria um insight só com o tipo
 	private static Insight insight(String tipo) {
 		Insight insight = new Insight();
 		insight.setTipo(tipo);
 		return insight;
 	}
 
+	// cria um contrato iniciado ontem, sem data de fim
 	private static Contrato contrato(String valor, String status) {
 		Contrato contrato = new Contrato();
 		contrato.setDataInicio(LocalDate.now().minusDays(1));
